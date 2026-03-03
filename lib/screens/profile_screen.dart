@@ -1,16 +1,43 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  final int userId;
+  const ProfileScreen({super.key, required this.userId});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? usuario;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    carregarPerfil();
+  }
+
+  void carregarPerfil() async {
+    final dados = await ApiService.getUsuario(widget.userId);
+    setState(() {
+      usuario = dados;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Perfil"),
-        backgroundColor: Colors.green,
-      ),
-      body: const Center(
+      appBar: AppBar(title: const Text("Perfil"), backgroundColor: Colors.green),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -19,12 +46,12 @@ class ProfileScreen extends StatelessWidget {
               backgroundColor: Colors.green,
               child: Icon(Icons.person, size: 50, color: Colors.white),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
-              "Nome do Usuário",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              usuario?['nome'] ?? '',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Text("email@email.com"),
+            Text(usuario?['email'] ?? ''),
           ],
         ),
       ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'screens/feed_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/register_screen.dart'; 
+import 'screens/profile_screen.dart'; 
 import 'screens/edit_profile_screen.dart';
-import 'screens/post_screen.dart';
+import 'screens/post_screen.dart'; 
+import 'screens/feed_screen.dart';
 
 void main() {
   runApp(const PapacapimApp());
@@ -18,17 +18,12 @@ class PapacapimApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Papacapim',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
+      theme: ThemeData(primarySwatch: Colors.green),
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
-        '/feed': (context) => const FeedScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/editProfile': (context) => const EditProfileScreen(),
-        '/post': (context) => const PostScreen(),
+        // Profile, EditProfile e Post serão abertos via MaterialPageRoute passando userId
       },
     );
   }
