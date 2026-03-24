@@ -48,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              usuario?['nome'] ?? '',
+              usuario?['name'] ?? '',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(usuario?['login'] ?? ''),

@@ -104,7 +104,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(post['conteudo'], style: const TextStyle(fontSize: 16)),
+                          Text(post['message'] ?? '', style: const TextStyle(fontSize: 16)),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
