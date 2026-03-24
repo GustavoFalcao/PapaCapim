@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final int userId;
-  const ProfileScreen({super.key, required this.userId});
+  final String login;
+  const ProfileScreen({super.key, required this.login});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -20,7 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void carregarPerfil() async {
-    final dados = await ApiService.getUsuario(widget.userId);
+    final dados = await ApiService.getUsuario(widget.login);
     setState(() {
       usuario = dados;
       isLoading = false;
@@ -51,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               usuario?['nome'] ?? '',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Text(usuario?['email'] ?? ''),
+            Text(usuario?['login'] ?? ''),
           ],
         ),
       ),

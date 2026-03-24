@@ -5,8 +5,8 @@ import 'edit_profile_screen.dart';
 import 'post_screen.dart';
 
 class FeedScreen extends StatefulWidget {
-  final int userId;
-  const FeedScreen({super.key, required this.userId});
+  final String login;
+  const FeedScreen({super.key, required this.login});
 
   @override
   State<FeedScreen> createState() => _FeedScreenState();
@@ -25,7 +25,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Future<void> carregarFeed() async {
     setState(() => isLoading = true);
-    final dados = await ApiService.buscarFeed(widget.userId);
+    final dados = await ApiService.buscarFeed(widget.login);
     setState(() {
       posts = dados;
       isLoading = false;
@@ -35,19 +35,19 @@ class _FeedScreenState extends State<FeedScreen> {
   Future<void> criarPostagem(String conteudo) async {
     if (conteudo.trim().isEmpty) return;
     setState(() => isPosting = true);
-    await ApiService.criarPost(widget.userId, conteudo);
+    await ApiService.criarPost(widget.login, conteudo);
     setState(() => isPosting = false);
     carregarFeed();
   }
 
   Future<void> toggleLike(int postId) async {
-    await ApiService.toggleLike(postId, widget.userId);
+    await ApiService.toggleLike(postId, widget.login);
     carregarFeed();
   }
 
   Future<void> replyPost(int postId, String conteudo) async {
     if (conteudo.trim().isEmpty) return;
-    await ApiService.replyPost(postId, widget.userId, conteudo);
+    await ApiService.replyPost(postId, widget.login, conteudo);
     carregarFeed();
   }
 
@@ -69,7 +69,7 @@ class _FeedScreenState extends State<FeedScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfileScreen(userId: widget.userId),
+                  builder: (context) => ProfileScreen(login: widget.login),
                 ),
               );
             },
@@ -81,7 +81,7 @@ class _FeedScreenState extends State<FeedScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditProfileScreen(userId: widget.userId),
+                  builder: (context) => EditProfileScreen(login: widget.login),
                 ),
               );
             },
@@ -111,10 +111,10 @@ class _FeedScreenState extends State<FeedScreen> {
                             children: [
                               IconButton(
                                 icon: Icon(
-                                  post['curtidas'].contains(widget.userId)
+                                  post['curtidas'].contains(widget.login)
                                       ? Icons.favorite
                                       : Icons.favorite_border,
-                                  color: post['curtidas'].contains(widget.userId)
+                                  color: post['curtidas'].contains(widget.login)
                                       ? Colors.red
                                       : Colors.grey,
                                 ),
@@ -168,10 +168,10 @@ class _FeedScreenState extends State<FeedScreen> {
         onPressed: isPosting
             ? null
             : () {
-                Navigator.push(
+              Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PostScreen(userId: widget.userId),
+                    builder: (context) => PostScreen(login: widget.login),
                   ),
                 );
               },

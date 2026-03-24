@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class PostScreen extends StatefulWidget {
-  final int userId;
-  const PostScreen({super.key, required this.userId});
+  final String login;
+  const PostScreen({super.key, required this.login});
 
   @override
   State<PostScreen> createState() => _PostScreenState();
@@ -18,7 +18,7 @@ class _PostScreenState extends State<PostScreen> {
 
     setState(() => isLoading = true);
 
-    final success = await ApiService.criarPost(widget.userId, conteudoController.text);
+    final success = await ApiService.criarPost(widget.login, conteudoController.text);
 
     setState(() => isLoading = false);
 

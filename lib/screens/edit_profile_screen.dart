@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final int userId;
-  const EditProfileScreen({super.key, required this.userId});
+  final String login;
+  const EditProfileScreen({super.key, required this.login});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -11,16 +11,16 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController senhaController = TextEditingController();
   bool isLoading = false;
 
   void salvarPerfil() async {
     setState(() => isLoading = true);
 
     final success = await ApiService.updateProfile(
-      widget.userId,
+      ApiService.currentUserId ?? 0,
       nomeController.text,
-      emailController.text,
+      senhaController.text,
     );
 
     setState(() => isLoading = false);
@@ -42,7 +42,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     // Aqui você poderia buscar os dados atuais do usuário
     // nomeController.text = ...
-    // emailController.text = ...
   }
 
   @override
@@ -55,11 +54,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             TextField(
               controller: nomeController,
-              decoration: const InputDecoration(labelText: "Nome"),
+              decoration: const InputDecoration(labelText: "Novo Nome"),
             ),
             TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: "Email"),
+              controller: senhaController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: "Nova Senha"),
             ),
             const SizedBox(height: 20),
             ElevatedButton(

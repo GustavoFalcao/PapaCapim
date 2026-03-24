@@ -36,12 +36,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => isLoading = false);
 
-    if (success != null && success['id'] != null) {
-      // Vai direto para o feed com o userId retornado
+    if (success != null) {
+      final loginPass = success['login'] ?? emailController.text;
+      // Vai direto para o feed com o login retornado
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FeedScreen(userId: success['id']),
+          builder: (context) => FeedScreen(login: loginPass),
         ),
       );
     } else {
@@ -71,7 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextField(
               controller: emailController,
               decoration: const InputDecoration(
-                labelText: "Email",
+                labelText: "Login",
                 border: OutlineInputBorder(),
               ),
             ),

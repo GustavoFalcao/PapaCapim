@@ -23,7 +23,7 @@ class PapacapimApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        // Profile, EditProfile e Post serão abertos via MaterialPageRoute passando userId
+        // Profile, EditProfile e Post serão abertos via MaterialPageRoute passando o login do usuário
       },
     );
   }

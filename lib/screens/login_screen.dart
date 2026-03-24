@@ -37,12 +37,13 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = false;
     });
 
-    if (user != null && user['id'] != null) {
-      // Navega para FeedScreen com o userId
+    if (user != null) {
+      final loginPass = user['login'] ?? ApiService.currentUserLogin ?? '';
+      // Navega para FeedScreen com o login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FeedScreen(userId: user['id']),
+          builder: (context) => FeedScreen(login: loginPass),
         ),
       );
     } else {
@@ -76,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: emailController,
                 decoration: const InputDecoration(
-                  labelText: "Email",
+                  labelText: "Login",
                   border: OutlineInputBorder(),
                 ),
               ),
