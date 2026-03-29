@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 
 class OtherProfileScreen extends StatefulWidget {
   final String login;
@@ -13,7 +14,6 @@ class OtherProfileScreen extends StatefulWidget {
 class _OtherProfileScreenState extends State<OtherProfileScreen> {
   Map<String, dynamic>? usuario;
   List<dynamic> posts = [];
-  List<dynamic> followers = [];
   bool isLoading = true;
   bool isFollowing = false;
 
@@ -23,36 +23,38 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     carregarDados();
   }
 
-Future<void> carregarDados() async {  
-  setState(() => isLoading = true);
-  
-  final userData = await ApiService.getUsuario(widget.profileLogin);
-  final userPosts = await ApiService.getUserPosts(widget.profileLogin);
-  final userFollowers = await ApiService.getFollowers(widget.profileLogin);
-  final following = await ApiService.isFollowing(widget.profileLogin);
-  
-  setState(() {
-    usuario = userData;
-    posts = userPosts;
-    followers = userFollowers;
-    isFollowing = following;
-    isLoading = false;
-  });
-}
+  Future<void> carregarDados() async {
+    setState(() => isLoading = true);
+    
+    final userData = await ApiService.getUsuario(widget.profileLogin);
+    final userPosts = await ApiService.getUserPosts(widget.profileLogin);
+    final following = await ApiService.isFollowing(widget.profileLogin);
+    
+    setState(() {
+      usuario = userData;
+      posts = userPosts;
+      isFollowing = following;
+      isLoading = false;
+    });
+  }
 
   void toggleFollow() async {
     setState(() => isFollowing = !isFollowing);
     
     if (isFollowing) {
       await ApiService.followUser(widget.profileLogin);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Você começou a seguir @${widget.profileLogin}")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Você começou a seguir @${widget.profileLogin}")),
+        );
+      }
     } else {
       await ApiService.unfollowUser(widget.profileLogin);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Você deixou de seguir @${widget.profileLogin}")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Você deixou de seguir @${widget.profileLogin}")),
+        );
+      }
     }
   }
 
@@ -69,38 +71,54 @@ Future<void> carregarDados() async {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: LogoClickable(
+            login: widget.login,
+            context: context,
+          ),
+          backgroundColor: Colors.green,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (usuario == null) {
-      return const Scaffold(
-        body: Center(child: Text("Usuário não encontrado")),
+      return Scaffold(
+        appBar: AppBar(
+          title: LogoClickable(
+            login: widget.login,
+            context: context,
+          ),
+          backgroundColor: Colors.green,
+        ),
+        body: const Center(child: Text("Usuário não encontrado")),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(usuario?['name'] ?? 'Perfil'),
+        title: LogoClickable(
+          login: widget.login,
+          context: context,
+        ),
         backgroundColor: Colors.green,
       ),
       body: RefreshIndicator(
-  onRefresh: carregarDados,  
-  child: SingleChildScrollView(
-    physics: const AlwaysScrollableScrollPhysics(),
-    child: Column(
+        onRefresh: carregarDados,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
             children: [
-              // CABEÇALHO DO PERFIL
               Container(
                 color: Colors.green[50],
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.green,
-                      child: const Icon(
+                      child: Icon(
                         Icons.person,
                         size: 50,
                         color: Colors.white,
@@ -122,24 +140,46 @@ Future<void> carregarDados() async {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // ESTATÍSTICAS
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildStatCard(
-                          'Posts',
-                          posts.length.toString(),
-                          Icons.article,
-                        ),
-                        _buildStatCard(
-                          'Seguidores',
-                          followers.length.toString(),
-                          Icons.people,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.article, size: 24, color: Colors.green),
+                              const SizedBox(height: 5),
+                              Text(
+                                posts.length.toString(),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                "Posts",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // BOTÃO SEGUIR
                     if (widget.profileLogin != widget.login)
                       SizedBox(
                         width: 200,
@@ -163,7 +203,6 @@ Future<void> carregarDados() async {
                 ),
               ),
               const SizedBox(height: 20),
-              // POSTAGENS DO USUÁRIO
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Align(
@@ -245,43 +284,6 @@ Future<void> carregarDados() async {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 24, color: Colors.green),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -14,9 +14,13 @@ class ApiService {
 
   // ========== AUTENTICAÇÃO ==========
   
-  // CADASTRAR USUÁRIO
   static Future<Map<String, dynamic>?> cadastrarUsuario(
       String nome, String login, String senha) async {
+    print("=== CADASTRANDO USUÁRIO ===");
+    print("Nome: $nome");
+    print("Login: $login");
+    print("Senha: $senha");
+    
     final url = Uri.parse('$baseUrl/users');
     final response = await http.post(
       url,
@@ -31,37 +35,49 @@ class ApiService {
       }),
     );
 
+    print("=== STATUS CADASTRO: ${response.statusCode} ===");
+    print("=== RESPOSTA CADASTRO: ${response.body} ===");
+
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     }
     return null;
   }
 
-  // LOGIN
   static Future<Map<String, dynamic>?> login(String loginUser, String senha) async {
-    final url = Uri.parse('$baseUrl/sessions');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'login': loginUser, 'password': senha}),
-    );
+  print("=== TENTANDO LOGIN COM: $loginUser ===");
+  
+  final url = Uri.parse('$baseUrl/sessions');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'login': loginUser, 'password': senha}),
+  );
 
-    if (response.statusCode == 200) {
-      final res = jsonDecode(response.body);
-      token = res['token'];
-      currentUserLogin = res['user_login'];
+  print("=== STATUS LOGIN: ${response.statusCode} ===");
+  print("=== RESPOSTA LOGIN: ${response.body} ===");
 
-      final uRes = await getUsuario(currentUserLogin!);
-      if (uRes != null) {
-        currentUserId = uRes['id'];
-        return uRes;
-      }
-      return res;
+  if (response.statusCode == 200) {
+    final res = jsonDecode(response.body);
+    token = res['token'];
+    // CONVERTE PARA MINÚSCULO AQUI
+    currentUserLogin = res['user_login'].toLowerCase();
+    print("=== TOKEN SALVO: $token ===");
+    print("=== LOGIN SALVO (minúsculo): $currentUserLogin ===");
+    
+    final uRes = await getUsuario(currentUserLogin!);
+    print("=== DADOS DO USUÁRIO APÓS LOGIN: $uRes ===");
+    
+    if (uRes != null) {
+      currentUserId = uRes['id'];
+      print("=== USER ID SALVO: $currentUserId ===");
+      return uRes;
     }
-    return null;
+    return res;
   }
+  return null;
+}
 
-  // LOGOUT (ENCERRAR SESSÃO)
   static Future<bool> logout(int sessionId) async {
     final url = Uri.parse('$baseUrl/sessions/$sessionId');
     final response = await http.delete(url, headers: _headers);
@@ -76,17 +92,28 @@ class ApiService {
 
   // ========== USUÁRIOS ==========
   
-  // PEGAR DADOS DE USUÁRIO
   static Future<Map<String, dynamic>?> getUsuario(String login) async {
+    print("=== BUSCANDO USUÁRIO: $login ===");
+    print("=== TOKEN PRESENTE: ${token != null ? "SIM ($token)" : "NÃO"} ===");
+    
     final url = Uri.parse('$baseUrl/users/$login');
-    final response = await http.get(url, headers: _headers);
+    final response = await http.get(
+      url, 
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'x-session-token': token!
+      }
+    );
+    
+    print("=== STATUS GET USUÁRIO: ${response.statusCode} ===");
+    print("=== RESPOSTA GET USUÁRIO: ${response.body} ===");
+    
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
     return null;
   }
 
-  // ATUALIZAR PERFIL
   static Future<bool> updateProfile(int userId, String nome, String senha) async {
     final url = Uri.parse('$baseUrl/users/$userId');
     final body = <String, String>{};
@@ -104,14 +131,12 @@ class ApiService {
     return response.statusCode == 201;
   }
 
-  // EXCLUIR CONTA
   static Future<bool> deleteAccount(int userId) async {
     final url = Uri.parse('$baseUrl/users/$userId');
     final response = await http.delete(url, headers: _headers);
     return response.statusCode == 204;
   }
 
-  // BUSCAR USUÁRIOS POR NOME
   static Future<List<dynamic>> searchUsers(String query) async {
     final url = Uri.parse('$baseUrl/users?search=$query');
     final response = await http.get(url, headers: _headers);
@@ -121,7 +146,6 @@ class ApiService {
     return [];
   }
 
-  // LISTAR TODOS USUÁRIOS
   static Future<List<dynamic>> getAllUsers() async {
     final url = Uri.parse('$baseUrl/users');
     final response = await http.get(url, headers: _headers);
@@ -133,14 +157,12 @@ class ApiService {
 
   // ========== SEGUIDORES ==========
   
-  // SEGUIR USUÁRIO
   static Future<bool> followUser(String followedLogin) async {
     final url = Uri.parse('$baseUrl/users/$followedLogin/followers');
     final response = await http.post(url, headers: _headers);
     return response.statusCode == 201;
   }
 
-  // DEIXAR DE SEGUIR
   static Future<bool> unfollowUser(String followedLogin) async {
     final followersUrl = Uri.parse('$baseUrl/users/$followedLogin/followers');
     final followersRes = await http.get(followersUrl, headers: _headers);
@@ -161,7 +183,6 @@ class ApiService {
     return false;
   }
 
-  // VERIFICAR SE SEGUE
   static Future<bool> isFollowing(String followedLogin) async {
     final url = Uri.parse('$baseUrl/users/$followedLogin/followers');
     final response = await http.get(url, headers: _headers);
@@ -172,7 +193,6 @@ class ApiService {
     return false;
   }
 
-  // LISTAR SEGUIDORES DE UM USUÁRIO
   static Future<List<dynamic>> getFollowers(String login) async {
     final url = Uri.parse('$baseUrl/users/$login/followers');
     final response = await http.get(url, headers: _headers);
@@ -182,7 +202,6 @@ class ApiService {
     return [];
   }
 
-  // LISTAR QUEM O USUÁRIO SEGUE
   static Future<List<dynamic>> getFollowing(String login) async {
     final url = Uri.parse('$baseUrl/users/$login/following');
     final response = await http.get(url, headers: _headers);
@@ -194,7 +213,6 @@ class ApiService {
 
   // ========== POSTAGENS ==========
   
-  // CRIAR POST
   static Future<bool> criarPost(String login, String conteudo) async {
     final url = Uri.parse('$baseUrl/posts');
     final response = await http.post(
@@ -207,7 +225,6 @@ class ApiService {
     return response.statusCode == 201;
   }
 
-  // PEGAR FEED (TODOS OS POSTS)
   static Future<List<dynamic>> buscarFeed(String login) async {
     final url = Uri.parse('$baseUrl/posts');
     final response = await http.get(url, headers: _headers);
@@ -222,7 +239,6 @@ class ApiService {
     return [];
   }
 
-  // PEGAR FEED APENAS DE QUEM SEGUE
   static Future<List<dynamic>> buscarFeedSeguindo(String login) async {
     final url = Uri.parse('$baseUrl/posts?feed=1');
     final response = await http.get(url, headers: _headers);
@@ -237,7 +253,6 @@ class ApiService {
     return [];
   }
 
-  // BUSCAR POSTS POR PALAVRA-CHAVE
   static Future<List<dynamic>> searchPosts(String query) async {
     final url = Uri.parse('$baseUrl/posts?search=$query');
     final response = await http.get(url, headers: _headers);
@@ -251,7 +266,6 @@ class ApiService {
     return [];
   }
 
-  // BUSCAR POSTS DE UM USUÁRIO ESPECÍFICO
   static Future<List<dynamic>> getUserPosts(String login) async {
     final url = Uri.parse('$baseUrl/users/$login/posts');
     final response = await http.get(url, headers: _headers);
@@ -265,7 +279,6 @@ class ApiService {
     return [];
   }
 
-  // EXCLUIR POST
   static Future<bool> deletePost(int postId) async {
     final url = Uri.parse('$baseUrl/posts/$postId');
     final response = await http.delete(url, headers: _headers);
@@ -274,7 +287,6 @@ class ApiService {
 
   // ========== CURTIDAS ==========
   
-  // CURTIR / DESCURTIR
   static Future<void> toggleLike(int postId, String login) async {
     final likesRes = await http.get(
         Uri.parse('$baseUrl/posts/$postId/likes'),
@@ -294,7 +306,6 @@ class ApiService {
     }
   }
 
-  // CARREGAR CURTIDAS DE UM POST
   static Future<void> _carregarCurtidas(Map<String, dynamic> post) async {
     final likesRes = await http.get(
         Uri.parse('$baseUrl/posts/${post['id']}/likes'),
@@ -309,7 +320,6 @@ class ApiService {
 
   // ========== RESPOSTAS ==========
   
-  // RESPONDER POST
   static Future<bool> replyPost(int postId, String login, String conteudo) async {
     final url = Uri.parse('$baseUrl/posts/$postId/replies');
     final response = await http.post(
@@ -322,7 +332,6 @@ class ApiService {
     return response.statusCode == 201;
   }
 
-  // BUSCAR RESPOSTAS DE UM POST
   static Future<List<dynamic>> getReplies(int postId) async {
     final url = Uri.parse('$baseUrl/posts/$postId/replies');
     final response = await http.get(url, headers: _headers);
@@ -344,7 +353,6 @@ class ApiService {
     return [];
   }
 
-  // CARREGAR RESPOSTAS DE UM POST
   static Future<void> _carregarRespostas(Map<String, dynamic> post) async {
     final replies = await getReplies(post['id']);
     post['respostas'] = replies;

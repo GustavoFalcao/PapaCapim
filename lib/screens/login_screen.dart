@@ -15,7 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController senhaController = TextEditingController();
   bool isLoading = false;
 
-  // Função de login
   void login() async {
     if (emailController.text.isEmpty || senhaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -29,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final user = await ApiService.login(
-      emailController.text,
+      emailController.text.toLowerCase(),
       senhaController.text,
     );
 
@@ -38,8 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (user != null) {
-      final loginPass = user['login'] ?? ApiService.currentUserLogin ?? '';
-      // Navega para FeedScreen com o login
+      final loginPass = ApiService.currentUserLogin ?? emailController.text.toLowerCase();
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -48,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email ou senha inválidos")),
+        const SnackBar(content: Text("Login ou senha inválidos")),
       );
     }
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 import 'profile_screen.dart';
 import 'edit_profile_screen.dart';
 import 'post_screen.dart';
@@ -36,8 +37,10 @@ class _FeedScreenState extends State<FeedScreen> {
       dados = await ApiService.buscarFeed(widget.login);
     }
     
+    final apenasPostsPrincipais = dados.where((post) => post['post_id'] == null).toList();
+    
     setState(() {
-      posts = dados;
+      posts = apenasPostsPrincipais;
       isLoading = false;
     });
   }
@@ -82,6 +85,31 @@ class _FeedScreenState extends State<FeedScreen> {
     
     if (confirm == true) {
       await ApiService.deletePost(postId);
+      carregarFeed();
+    }
+  }
+
+  Future<void> _deleteReply(int replyId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Excluir resposta"),
+        content: const Text("Tem certeza que deseja excluir esta resposta?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      await ApiService.deletePost(replyId);
       carregarFeed();
     }
   }
@@ -196,6 +224,13 @@ class _FeedScreenState extends State<FeedScreen> {
                           _formatDate(reply['created_at']),
                           style: const TextStyle(fontSize: 9, color: Colors.grey),
                         ),
+                        if (reply['user_login'] == widget.login)
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 14, color: Colors.red),
+                            onPressed: () => _deleteReply(reply['id']),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -215,14 +250,16 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Papacapim"),
+        title: LogoClickable(
+          login: widget.login,
+          context: context,
+        ),
         backgroundColor: Colors.green,
         actions: [
-          // Botão de filtrar feed
           IconButton(
             icon: Icon(
               showOnlyFollowing ? Icons.people : Icons.people_outline,
-              color: showOnlyFollowing ? Colors.yellow : Colors.white,
+              color: showOnlyFollowing ? Colors.black : Colors.black,
             ),
             onPressed: () {
               setState(() {
@@ -232,7 +269,6 @@ class _FeedScreenState extends State<FeedScreen> {
             },
             tooltip: showOnlyFollowing ? "Ver todos" : "Ver apenas quem sigo",
           ),
-          // Botão de pesquisa
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -245,7 +281,6 @@ class _FeedScreenState extends State<FeedScreen> {
             },
             tooltip: "Pesquisar",
           ),
-          // Botão de perfil
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
@@ -258,7 +293,6 @@ class _FeedScreenState extends State<FeedScreen> {
             },
             tooltip: "Meu perfil",
           ),
-          // Botão de editar perfil
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
@@ -307,7 +341,6 @@ class _FeedScreenState extends State<FeedScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // CABEÇALHO DO POST - NOME DO USUÁRIO
                                 Row(
                                   children: [
                                     const Icon(Icons.person, size: 20, color: Colors.green),
@@ -345,17 +378,14 @@ class _FeedScreenState extends State<FeedScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                // MENSAGEM
                                 Text(
                                   post['message'] ?? '',
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 10),
-                                // BOTÕES DE AÇÃO
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // CURTIR
                                     Row(
                                       children: [
                                         IconButton(
@@ -376,12 +406,10 @@ class _FeedScreenState extends State<FeedScreen> {
                                         ),
                                       ],
                                     ),
-                                    // COMENTAR
                                     IconButton(
                                       icon: const Icon(Icons.comment, size: 20),
                                       onPressed: () => _showReplyDialog(post['id']),
                                     ),
-                                    // EXCLUIR (APENAS SE FOR DO PRÓPRIO USUÁRIO)
                                     if (post['user_login'] == widget.login)
                                       IconButton(
                                         icon: const Icon(Icons.delete, size: 20, color: Colors.red),
@@ -389,7 +417,6 @@ class _FeedScreenState extends State<FeedScreen> {
                                       ),
                                   ],
                                 ),
-                                // RESPOSTAS
                                 _buildReplies(post['id']),
                               ],
                             ),

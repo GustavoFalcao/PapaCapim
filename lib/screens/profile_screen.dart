@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 import 'login_screen.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String login;
@@ -13,9 +15,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? usuario;
   List<dynamic> posts = [];
-  List<dynamic> followers = [];
-  List<dynamic> following = [];
   bool isLoading = true;
+  String? errorMessage;
+
+  String get _loginCorreto => ApiService.currentUserLogin ?? widget.login;
 
   @override
   void initState() {
@@ -23,22 +26,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     carregarPerfil();
   }
 
-Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
-  setState(() => isLoading = true);
-  
-  final dados = await ApiService.getUsuario(widget.login);
-  final userPosts = await ApiService.getUserPosts(widget.login);
-  final userFollowers = await ApiService.getFollowers(widget.login);
-  final userFollowing = await ApiService.getFollowing(widget.login);
-  
-  setState(() {
-    usuario = dados;
-    posts = userPosts;
-    followers = userFollowers;
-    following = userFollowing;
-    isLoading = false;
-  });
-}
+  Future<void> carregarPerfil() async {
+    final loginParaBuscar = _loginCorreto;
+    
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    
+    try {
+      final dados = await ApiService.getUsuario(loginParaBuscar);
+      
+      if (dados == null) {
+        setState(() {
+          errorMessage = "Usuário não encontrado: $loginParaBuscar";
+          isLoading = false;
+        });
+        return;
+      }
+      
+      final userPosts = await ApiService.getUserPosts(loginParaBuscar);
+      
+      setState(() {
+        usuario = dados;
+        posts = userPosts;
+        isLoading = false;
+      });
+      
+    } catch (e) {
+      print("Erro ao carregar perfil: $e");
+      setState(() {
+        errorMessage = "Erro ao carregar perfil: $e";
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deletePostFromProfile(int postId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Excluir postagem"),
+        content: const Text("Tem certeza que deseja excluir esta postagem?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      await ApiService.deletePost(postId);
+      carregarPerfil();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Postagem excluída com sucesso")),
+        );
+      }
+    }
+  }
 
   void _confirmDeleteAccount() {
     showDialog(
@@ -61,7 +113,6 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                 ApiService.currentUserId ?? 0
               );
               if (success) {
-                // Limpar dados e voltar ao login
                 ApiService.token = null;
                 ApiService.currentUserLogin = null;
                 ApiService.currentUserId = null;
@@ -104,7 +155,6 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
           ),
           TextButton(
             onPressed: () async {
-              // Como não temos o ID da sessão, apenas limpamos os dados localmente
               ApiService.token = null;
               ApiService.currentUserLogin = null;
               ApiService.currentUserId = null;
@@ -124,17 +174,81 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
     );
   }
 
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      
+      if (diff.inDays > 7) {
+        return '${date.day}/${date.month}/${date.year}';
+      } else if (diff.inDays > 0) {
+        return '${diff.inDays}d atrás';
+      } else if (diff.inHours > 0) {
+        return '${diff.inHours}h atrás';
+      } else if (diff.inMinutes > 0) {
+        return '${diff.inMinutes}m atrás';
+      } else {
+        return 'agora';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: LogoClickable(
+            login: _loginCorreto,
+            context: context,
+          ),
+          backgroundColor: Colors.green,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (errorMessage != null || usuario == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: LogoClickable(
+            login: _loginCorreto,
+            context: context,
+          ),
+          backgroundColor: Colors.green,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                errorMessage ?? "Erro ao carregar perfil",
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: carregarPerfil,
+                child: const Text("Tentar novamente"),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Meu Perfil"),
+        title: LogoClickable(
+          login: _loginCorreto,
+          context: context,
+        ),
         backgroundColor: Colors.green,
         actions: [
           IconButton(
@@ -145,21 +259,20 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
         ],
       ),
       body: RefreshIndicator(
-  onRefresh: carregarPerfil, 
-  child: SingleChildScrollView(
-    physics: const AlwaysScrollableScrollPhysics(),
-    child: Column(
+        onRefresh: carregarPerfil,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
             children: [
-              // CABEÇALHO DO PERFIL
               Container(
                 color: Colors.green[50],
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.green,
-                      child: const Icon(
+                      child: Icon(
                         Icons.person,
                         size: 50,
                         color: Colors.white,
@@ -167,58 +280,74 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      usuario?['name'] ?? '',
+                      usuario?['name'] ?? _loginCorreto,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '@${usuario?['login'] ?? ''}',
+                      '@${usuario?['login'] ?? _loginCorreto}',
                       style: const TextStyle(
                         fontSize: 16,
                         color: Colors.grey,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // ESTATÍSTICAS
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildStatCard(
-                          'Posts',
-                          posts.length.toString(),
-                          Icons.article,
-                        ),
-                        _buildStatCard(
-                          'Seguidores',
-                          followers.length.toString(),
-                          Icons.people,
-                        ),
-                        _buildStatCard(
-                          'Seguindo',
-                          following.length.toString(),
-                          Icons.person_add,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.article, size: 24, color: Colors.green),
+                              const SizedBox(height: 5),
+                              Text(
+                                posts.length.toString(),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                "Posts",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              // BOTÕES DE AÇÃO
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Expanded(
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: 200,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, '/edit_profile');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(login: _loginCorreto),
+                            ),
+                          ).then((_) => carregarPerfil());
                         },
                         icon: const Icon(Icons.edit, color: Colors.white),
                         label: const Text(
@@ -227,8 +356,9 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: 200,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
@@ -246,7 +376,6 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                 ),
               ),
               const SizedBox(height: 20),
-              // POSTAGENS DO USUÁRIO
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Align(
@@ -303,7 +432,7 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.favorite,
                                   size: 16,
                                   color: Colors.red,
@@ -313,11 +442,15 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
                                   '${post['curtidas']?.length ?? 0}',
                                   style: const TextStyle(fontSize: 12),
                                 ),
+                                const SizedBox(width: 12),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                  onPressed: () => _deletePostFromProfile(post['id']),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
                               ],
                             ),
-                            onTap: () {
-                              // Mostrar post completo (opcional)
-                            },
                           ),
                         );
                       },
@@ -328,65 +461,5 @@ Future<void> carregarPerfil() async {  // <-- MUDE void para Future<void>
         ),
       ),
     );
-  }
-
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 24, color: Colors.green),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null) return '';
-    try {
-      final date = DateTime.parse(dateStr);
-      final now = DateTime.now();
-      final diff = now.difference(date);
-      
-      if (diff.inDays > 7) {
-        return '${date.day}/${date.month}/${date.year}';
-      } else if (diff.inDays > 0) {
-        return '${diff.inDays}d atrás';
-      } else if (diff.inHours > 0) {
-        return '${diff.inHours}h atrás';
-      } else if (diff.inMinutes > 0) {
-        return '${diff.inMinutes}m atrás';
-      } else {
-        return 'agora';
-      }
-    } catch (e) {
-      return '';
-    }
   }
 }

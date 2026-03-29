@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'feed_screen.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,7 +16,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController senhaController = TextEditingController();
   bool isLoading = false;
 
-  // Função de cadastro
   void cadastrar() async {
     if (nomeController.text.isEmpty ||
         emailController.text.isEmpty ||
@@ -30,22 +30,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final success = await ApiService.cadastrarUsuario(
       nomeController.text,
-      emailController.text,
+      emailController.text.toLowerCase(),
       senhaController.text,
     );
 
-    setState(() => isLoading = false);
-
     if (success != null) {
-      final loginPass = success['login'] ?? emailController.text;
-      // Vai direto para o feed com o login retornado
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FeedScreen(login: loginPass),
-        ),
+      final loginSuccess = await ApiService.login(
+        emailController.text.toLowerCase(),
+        senhaController.text,
       );
+      
+      if (loginSuccess != null) {
+        final loginPass = ApiService.currentUserLogin ?? emailController.text.toLowerCase();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Conta criada com sucesso!")),
+          );
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FeedScreen(login: loginPass),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Conta criada! Faça login para continuar.")),
+          );
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LoginScreen(),
+            ),
+          );
+        }
+      }
     } else {
+      setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao criar usuário")),
       );
@@ -55,7 +80,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Criar Conta")),
+      appBar: AppBar(
+        title: const Text("Criar Conta"),
+        backgroundColor: Colors.green,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

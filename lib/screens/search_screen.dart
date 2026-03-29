@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 import 'other_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -16,19 +17,17 @@ class _SearchScreenState extends State<SearchScreen> {
   List<dynamic> users = [];
   bool isLoading = false;
   bool hasSearched = false;
-  String currentTab = 'posts'; // 'posts' ou 'users'
+  String currentTab = 'posts';
 
   @override
   void initState() {
     super.initState();
-    // Carregar usuários sugeridos ao abrir
     carregarSugestoes();
   }
 
   void carregarSugestoes() async {
     setState(() => isLoading = true);
     final allUsers = await ApiService.getAllUsers();
-    // Filtrar o próprio usuário
     final filteredUsers = allUsers.where((u) => u['login'] != widget.login).toList();
     setState(() {
       users = filteredUsers.take(10).toList();
@@ -90,7 +89,10 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Pesquisar"),
+        title: LogoClickable(
+          login: widget.login,
+          context: context,
+        ),
         backgroundColor: Colors.green,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70),
@@ -128,7 +130,6 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Column(
         children: [
-          // Abas de navegação
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -153,7 +154,6 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-          // Conteúdo
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -257,7 +257,6 @@ class _SearchScreenState extends State<SearchScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           child: InkWell(
             onTap: () {
-              // Ir para o perfil do autor
               if (post['user_login'] != widget.login) {
                 Navigator.push(
                   context,

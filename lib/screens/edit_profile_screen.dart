@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String login;
@@ -33,7 +34,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void salvarPerfil() async {
-    // Validações
     if (nomeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Nome não pode estar vazio")),
@@ -68,7 +68,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         );
         
-        // Se a senha foi alterada, fazer logout
         if (senhaController.text.isNotEmpty) {
           showDialog(
             context: context,
@@ -115,14 +114,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Editar Perfil"),
+        title: LogoClickable(
+          login: widget.login,
+          context: context,
+        ),
         backgroundColor: Colors.green,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Avatar
             Center(
               child: Column(
                 children: [
@@ -147,7 +148,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            // Campo Nome
             TextField(
               controller: nomeController,
               decoration: const InputDecoration(
@@ -158,7 +158,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Campo Nova Senha
             TextField(
               controller: senhaController,
               obscureText: true,
@@ -170,7 +169,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Campo Confirmar Senha
             TextField(
               controller: confirmarSenhaController,
               obscureText: true,
@@ -182,7 +180,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            // Botão Salvar
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -210,7 +207,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Informação
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

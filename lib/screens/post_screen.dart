@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../widgets/logo_clickable.dart';
 
 class PostScreen extends StatefulWidget {
   final String login;
@@ -68,7 +69,7 @@ class _PostScreenState extends State<PostScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context, true); // Retorna true para indicar sucesso
+        Navigator.pop(context, true);
       }
     } else {
       if (mounted) {
@@ -86,7 +87,10 @@ class _PostScreenState extends State<PostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Nova Postagem"),
+        title: LogoClickable(
+          login: widget.login,
+          context: context,
+        ),
         backgroundColor: Colors.green,
         actions: [
           TextButton(
@@ -115,7 +119,6 @@ class _PostScreenState extends State<PostScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Avatar e informações do usuário
             Row(
               children: [
                 CircleAvatar(
@@ -152,7 +155,6 @@ class _PostScreenState extends State<PostScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            // Campo de texto
             TextField(
               controller: conteudoController,
               maxLines: 8,
@@ -171,7 +173,6 @@ class _PostScreenState extends State<PostScreen> {
                 counterText: '',
               ),
             ),
-            // Contador de caracteres
             Align(
               alignment: Alignment.centerRight,
               child: Text(
@@ -187,7 +188,6 @@ class _PostScreenState extends State<PostScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Dicas
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
