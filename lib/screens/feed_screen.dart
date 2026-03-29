@@ -30,6 +30,8 @@ class _FeedScreenState extends State<FeedScreen> {
         ? await ApiService.buscarFeedSeguindo(widget.login)
         : await ApiService.buscarFeed(widget.login);
     
+    if (!mounted) return;
+
     setState(() {
       posts = dados.where((p) => p['post_id'] == null).toList();
       isLoading = false;

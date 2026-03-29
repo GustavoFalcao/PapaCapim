@@ -23,6 +23,7 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => isLoading = true);
     users = await ApiService.searchUsers(search.text);
     posts = await ApiService.searchPosts(search.text);
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 

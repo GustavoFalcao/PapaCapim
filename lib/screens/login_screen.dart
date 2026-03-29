@@ -32,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
       senhaController.text,
     );
 
+    if (!mounted) return;
+
     setState(() {
       isLoading = false;
     });

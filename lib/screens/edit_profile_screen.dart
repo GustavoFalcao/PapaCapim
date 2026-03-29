@@ -34,6 +34,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               onPressed: loading ? null : () async {
                 setState(() => loading = true);
                 final ok = await ApiService.updateProfile(ApiService.currentUserId ?? 0, nome.text, senha.text);
+                if (!mounted) return;
                 setState(() => loading = false);
                 if (ok) Navigator.pop(context);
               },

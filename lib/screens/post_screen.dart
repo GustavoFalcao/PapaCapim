@@ -21,6 +21,7 @@ class _PostScreenState extends State<PostScreen> {
     }
     setState(() => isLoading = true);
     final success = await ApiService.criarPost(widget.login, controller.text);
+    if (!mounted) return;
     setState(() => isLoading = false);
     if (success) {
       Navigator.pop(context, true);

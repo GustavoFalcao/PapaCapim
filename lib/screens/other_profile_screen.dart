@@ -28,6 +28,7 @@ class _OtherProfileScreenState extends State<OtherProfileScreen> {
     user = await ApiService.getUsuario(widget.profileLogin);
     posts = await ApiService.getUserPosts(widget.profileLogin);
     isFollowing = await ApiService.isFollowing(widget.profileLogin);
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 

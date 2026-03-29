@@ -70,6 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     } else {
+      if (!mounted) return;
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao criar usuário")),

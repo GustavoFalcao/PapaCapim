@@ -27,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => isLoading = true);
     usuario = await ApiService.getUsuario(widget.login);
     posts = await ApiService.getUserPosts(widget.login);
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 
